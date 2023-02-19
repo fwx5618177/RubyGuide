@@ -18,7 +18,8 @@ include SCP
 LOCAL = ARGV[0]
 TARGET = ARGV[1]
 
-zip_file = compress(LOCAL, "dist.zip")
+# zip_file = compress(LOCAL, "dist.zip")
+thread_compress_entry(LOCAL, "dist.zip", 4)
 move("#{LOCAL}/dist.zip", TARGET)
 unCompressfile("#{TARGET}/dist.zip", TARGET)
 delete_file(LOCAL)

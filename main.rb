@@ -19,5 +19,6 @@ LOCAL = ARGV[0]
 TARGET = ARGV[1]
 
 zip_file = compress(LOCAL, "dist.zip")
-# move(DIR, TARGET)
-# unCompressfile(DIR, TARGET)
+move("#{LOCAL}/dist.zip", TARGET)
+unCompressfile("#{TARGET}/dist.zip", TARGET)
+delete_file(LOCAL)

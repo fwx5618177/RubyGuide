@@ -19,5 +19,5 @@ LOCAL = ARGV[0]
 TARGET = ARGV[1]
 
 zip_file = compress(LOCAL, "dist.zip")
-move(DIR, TARGET)
-unCompressfile(DIR, TARGET)
+# move(DIR, TARGET)
+# unCompressfile(DIR, TARGET)

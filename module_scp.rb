@@ -7,29 +7,45 @@ require 'zip'
 
 module SCP
     def compress(local_file, file_name)
-        dest_file = File.join(local_file, file_name)
+        dest_dir = File.expand_path(local_file)
+        dest_file = File.join(dest_dir, '..', file_name)
         
-        puts "#{dest_file} compress #{local_file} ..."
+        puts "#{local_file} ===> #{dest_dir} compress #{dest_file} ..."
 
-        if !File.exist?(local_file)
+        if !File.exist?(dest_file)
             puts "File does not exist."
         end
 
-        Zip::File.open(dest_file, Zip::File::CREATE) do |zipfile|
-            puts "entry #{zipfile}"
-            Dir[File.join(local_file), '**', '**'].each do |file|
-                if zipfile.find_entry(file)
-                    puts "File already exists in the zip file: #{zipfile.find_entry(file)}, #{dest_file}" 
-                elsif zipfile.glob(file).any?
-                    puts "File already exists in the zip file."
-                else
-                    zipfile.add(file.sub(local_file + '/', ''), file)
+        puts "#{dest_file} loading..."
+
+        begin
+            Zip::File.open(dest_file, Zip::File::CREATE) do |zipfile|
+                puts "entry #{zipfile}"
+                Dir.chdir(dest_dir) do
+                    Dir[File.join('**', '**')].each do |file|
+                        if zipfile.find_entry(file)
+                            puts "File already exists in the zip file: #{zipfile.find_entry(file)}, #{dest_file}" 
+                        elsif zipfile.glob(file).any?
+                            puts "File already exists in the zip file."
+                        else
+                            # relative_path = file.sub(/^#{Regexp.escape(local_file + '/')}/, '')
+                            # puts "Path: #{relative_path}"
+                            # zipfile.add(relative_path, file)
+                            # zipfile.add(file.sub(local_file + "/", ''), file)
+                            if File.exist?(file)
+                                puts "Add: #{file}, #{file.sub(dest_dir + '/', '')}"
+                                # zipfile.add(file, file)
+                                zipfile.add(file.sub(dest_dir + '/', ''), file)
+                            end
+                        end
+                    end
                 end
             end
-
-            puts "Add all successfully!"
-        
+        rescue Zip::Error => e
+            puts "Can't find files: #{e.message}"
         end
+
+        puts "Add all successfully!"
 
         return dest_file
     end
@@ -43,7 +59,7 @@ module SCP
     end
 
     def unCompressfile(zip_file, target_dir)
-        Zip::file.open(zip_file) do |zipfile|
+        Zip::File.open(zip_file) do |zipfile|
             zipfile.each do |file|
                 fpath = File.join(target_dir, file.name)
                 FileUtils.mkdir_p(File.dirname(fpath))

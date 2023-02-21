@@ -15,6 +15,7 @@ include SCP
 
 # Move File
 # ruby main.rb "~/Desktop/prompts" "/Volumes/RAID/dev"
+# ruby main.rb "~/Desktop/perl/spide/dist" "/Volumes/raid1/r18/img/"
 LOCAL = ARGV[0]
 TARGET = ARGV[1]
 

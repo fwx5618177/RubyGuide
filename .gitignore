@@ -1,2 +1,6 @@
-test.sh
+*.sh
 dist/
+blog/*
+
+list
+test

@@ -63,7 +63,7 @@ module SCP
             end
 
             Dir.chdir(dest_dir) do
-                Parallel.each(Dir[File.join('**', '**')], in_threads: 4) do |file|
+                Parallel.each(Dir[File.join('**', '**')], in_threads: thread_nums) do |file|
                     if zipfile.find_entry(file)
                         puts "File already exists"
                     elsif zipfile.glob(file).any?
@@ -102,12 +102,23 @@ module SCP
     end
 
     def unCompressfile(zip_file, target_dir)
+        progress = 0
+        total_size = 0
         Zip::File.open(zip_file) do |zipfile|
+            zipfile.each do |entry|
+                total_size += entry.size
+            end
+
             zipfile.each do |file|
+                cur_size = file.size
+                print_process(progress, total_size)
+                $stdout.flush
+
                 fpath = File.join(target_dir, file.name)
                 FileUtils.mkdir_p(File.dirname(fpath))
 
                 zipfile.extract(file, fpath) unless File.exist?(fpath)
+                progress += cur_size
             end
         end
 
@@ -118,17 +129,23 @@ module SCP
         puts "Deleted #{zip_file} on remote machine."
     end
 
-    def delete_file(local_file)
+    def delete_file(local_file, force = false)
         dir = File.expand_path(local_file)
-        puts "Do you really want to delete #{dir}? [Y/N]: "
-        answer = STDIN.gets.chomp.downcase
 
-        if answer == 'y'
-            puts "exist: #{File.exist?dir}"
+        if (force)
             FileUtils.rm_rf(dir) if File.exist?dir
             puts "Del #{dir} successfully!"
-        else
-            puts "Del canceled."
+        elsif
+            puts "Do you really want to delete #{dir}? [Y/N]: "
+            answer = STDIN.gets.chomp.downcase
+    
+            if answer == 'y'
+                puts "exist: #{File.exist?dir}"
+                FileUtils.rm_rf(dir) if File.exist?dir
+                puts "Del #{dir} successfully!"
+            else
+                puts "Del canceled."
+            end
         end
     end
 
@@ -142,5 +159,22 @@ module SCP
         puts "Deleted #{local_file} on local machine."
 
         puts "SCP transfer complete."
+    end
+
+    def print_process(progress, total_size)
+        percent = (progress / total_size * 100).round
+        puts "\r正在解压,已完成:  #{percent}"
+    end
+
+    def directories_exist?(dir1, dir2)
+        [dir1, dir2].all? do |dir|
+            File.directory?(dir)
+        end
+    end
+
+    def file_exist?(dir1, dir2, filename)
+        [dir1, dir2].all? do |dir|
+            File.exist?(File.join(dir, filename))
+        end
     end
 end

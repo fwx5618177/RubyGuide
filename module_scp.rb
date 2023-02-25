@@ -51,30 +51,45 @@ module SCP
 
     def thread_compress(local_file, file_name, thread_nums)
         dest_dir = File.expand_path(local_file)
-        dest_file = File.join(dest_dir, file_name)
+        puts "File or directory: #{dest_dir}, #{File.file?(dest_dir)}"
+        
+        if File.file?(dest_dir)
+            dir_name = File.dirname(dest_dir)
+            dest_file = File.join(dir_name, file_name)
 
-        Zip::File.open(dest_file, Zip::File::CREATE) do |zipfile|
-            puts "Entry #{zipfile}"
-            zip_path = File.basename(dest_dir)
-            if zipfile.find_entry(zip_path)
-                puts "mkdir already."
-            else
-                zipfile.mkdir(zip_path) 
+            puts "dirname: #{dir_name}"
+            Zip::File.open(dest_file, Zip::File::CREATE) do |zipfile|
+                zipfile.add(File.basename(dest_dir), dest_dir)
             end
-
-            Dir.chdir(dest_dir) do
-                Parallel.each(Dir[File.join('**', '**')], in_threads: thread_nums) do |file|
-                    if zipfile.find_entry(file)
-                        puts "File already exists"
-                    elsif zipfile.glob(file).any?
-                        puts "File already exists"
-                    else
-                        puts "Id: #{Thread.current.object_id}, add: #{zip_path}/#{file}"
-                        zipfile.add(File.join(zip_path, file), "#{dest_dir}/#{file}")
+        else
+            dest_file = File.join(dest_dir, file_name)
+    
+            Zip::File.open(dest_file, Zip::File::CREATE) do |zipfile|
+                puts "Entry #{zipfile}"
+                zip_path = File.basename(dest_dir)
+                if zipfile.find_entry(zip_path)
+                    puts "mkdir already."
+                else
+                    zipfile.mkdir(zip_path) 
+                end
+            
+                Dir.chdir(dest_dir) do
+                    Parallel.each(Dir[File.join('**', '**')], in_threads: thread_nums) do |file|
+                        if zipfile.find_entry(file)
+                            puts "File already exists"
+                        elsif zipfile.glob(file).any?
+                            puts "File already exists"
+                        else
+                            puts "Id: #{Thread.current.object_id}, add: #{zip_path}/#{file}"
+                            zipfile.add(File.join(zip_path, file), "#{dest_dir}/#{file}")
+                        end
                     end
                 end
+                
             end
         end
+
+
 
         puts "Add all successfully!"
 
@@ -91,8 +106,12 @@ module SCP
         puts "Compression completed!"
     end
 
-    def move(local_file, target_path)
-        file_path = File.expand_path(local_file)
+    def move(local_file, file_name, target_path)
+        file_path = "#{File.expand_path(local_file)}/#{file_name}"
+        file_path = "#{File.expand_path(File.dirname(local_file))}/dist.zip" unless File.file?local_file
+
+        puts "#{file_path}"
+
         FileUtils.mkdir_p(target_path) unless File.directory?(target_path)
 
         FileUtils.mv(file_path, target_path)

@@ -22,6 +22,6 @@ FORCE = ARGV[2].downcase
 
 # zip_file = compress(LOCAL, "dist.zip")
 thread_compress_entry(LOCAL, "dist.zip", 16)
-move("#{LOCAL}/dist.zip", TARGET)
+move(LOCAL, "dist.zip", TARGET)
 unCompressfile("#{TARGET}/dist.zip", TARGET)
 delete_file(LOCAL, FORCE == "y")

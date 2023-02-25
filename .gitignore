@@ -1,6 +1,9 @@
 *.sh
 dist/
+compressed_files/
 blog/*
 
 list
 test
+
+empty_*

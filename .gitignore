@@ -1,7 +1,7 @@
 *.sh
 dist/
 compressed_files/
-blog/*
+blog/
 
 list
 test
